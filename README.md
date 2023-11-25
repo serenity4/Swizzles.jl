@@ -40,7 +40,7 @@ julia> v
 
 Additionally, a `@swizzle` macro is defined which provides nice syntax for it:
 
-```
+```julia
 julia> v = [10, 20, 30, 40];
 
 julia> @swizzle v.xy
