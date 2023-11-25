@@ -5,7 +5,12 @@ module Swizzles
     swizzle(T, v, indices...)
 
 Create a new object made up of `v[i₁], v[i₂], ...` where `indices = (i₁, i₂, ...)`.
-If a type is provided as first argument, the result will be wrapped into it.
+If a type is provided as first argument, the result will be wrapped into it via [`construct_swizzle`](@ref).
+
+A default type is derived from `swizzle(v, indices...)`, where a single index infers `T = eltype(v)`, and multiple indices infer `T = typeof(v)`.
+For statically sized vectors (`StaticVector` and `SizedVector`), an extension extends [StaticArraysCore](https://github.com/JuliaArrays/StaticArraysCore.jl) vectors such that one of correct size is used to hold the result.
+
+See also: [`swizzle!`](@ref)
 """
 function swizzle end
 
@@ -17,6 +22,17 @@ swizzle(::Type{T}, v, i, indices...) where {T} = construct_swizzle(T, swizzle(Tu
 swizzle(v::AbstractVector, i) = swizzle(eltype(v), v, i)
 swizzle(v::AbstractVector, i, j, indices...) = swizzle(typeof(v), v, i, j, indices...)
 
+"""
+    construct_swizzle(T, args)
+
+Wrap the result of a swizzling operation into `T(args...)`.
+
+This method may be extended for your own types, e.g. if a different constructor must be used.
+
+See also: [`swizzle`](@ref)
+"""
+function construct_swizzle end
+
 construct_swizzle(::Type{T}, args::Tuple) where {T} = T(args...)
 construct_swizzle(::Type{Vector}, args::Tuple) = [args...]
 construct_swizzle(::Type{Vector{T}}, args::Tuple) where {T} = T[args...]
@@ -24,7 +40,7 @@ construct_swizzle(::Type{Vector{T}}, args::Tuple) where {T} = T[args...]
 """
     swizzle!(v, value, indices...)
 
-Mutate `v` at `indices` such that `v[i₁] = value[1], v[i₂] = value[2], ...` where `indices = (i₁, i₂, ...)`,
+Mutate `v` at `indices` such that `v[i₁] = value[1], v[i₂] = value[2], ...` where `indices = (i₁, i₂, ...)`.
 and return `value`.
 """
 function swizzle!(v, value, i, indices...)
@@ -82,6 +98,60 @@ function generate_swizzle_expr(ex::Expr, T = nothing)
   !isnothing(rhs) && insert!(args, 2, esc(rhs))
   :($f($(args...)))
 end
+
+"""
+    @swizzle v.xyz
+    @swizzle v.rgb
+    @swizzle T v.xyz
+    @swizzle v.xyz = [1, 2, 3]
+    @swizzle v.rgb = v.bgr
+
+Perform a swizzling operation, extracting components or, if an assignment is provided, mutating them.
+
+This macro translates a `.<field1><field2>...<fieldn>` syntax such as `.xwyz` into an appropriate call to [`swizzle`](@ref) (non-mutating) or [`swizzle!`](@ref) (mutating).
+
+If the operation is non-mutating, an additional type argument `T` may be provided to put the result of the extraction into a specific type (see the documentation for [`swizzle`](@ref) for more details).
+
+Each letter on the right-hand side of `.` is considered as a separate component name, and is by default mapped to:
+- `x` or `r` -> first component
+- `y` or `g` -> second component
+- `z` or `b` -> third component
+- `w` or `a` -> fourth component
+
+using nomenclature from geometry processing (`[x, y, z, w]` representing spatial coordinates) and computer graphics (`[r, g, b, a]` representing color vectors).
+
+This mapping may be customized from Julia 1.11 onwards (see extended help).
+
+# Extended help
+
+From Julia 1.11 onwards, [scoped values](https://docs.julialang.org/en/v1.11-dev/base/scopedvalues/) allow the customization of this component mapping, via `@with Swizzles.component_names => Dict(...)`. For example, if you wanted to consider width, height and depth as first, second and third components, you may do
+```julia
+new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
+# You might also have done `@with Swizzles.component_names => new_names`
+# to discard existing names.
+@with Swizzles.component_names => merge(Swizzles.component_names, new_names) do
+  @swizzle dims.w
+  @swizzle dims.whd
+end
+```
+For convenience, you could even define your own `@swizzle` macro shadowing the one exported by this package as
+```julia
+using Swizzles
+
+macro _swizzle(ex)
+  new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
+  ex = quote
+    @with Swizzles.component_names => merge(Swizzles.component_names[], \$new_names) do
+      Swizzles.@swizzle \$ex
+    end
+  end
+  esc(ex)
+end
+```
+
+Whether or not this is a good idea is for you to decide.
+"""
+macro swizzle end
 
 macro swizzle(T, ex)
   generate_swizzle_expr(ex, T)

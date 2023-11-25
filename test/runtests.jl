@@ -32,7 +32,7 @@ using Test
 
   @testset "`swizzle!`" begin
     v = [1, 2, 3]
-    @test swizzle!(v, [5, 6], 3, 1) == [5, 6]
+    @test swizzle!(v, (5, 6), 3, 1) === (5, 6)
     @test v == [6, 2, 5]
 
     v = @MVector [1, 2, 3]
@@ -61,5 +61,26 @@ using Test
     sw = @swizzle v.xzw = [11, 12, 13]
     @test sw == [11, 12, 13]
     @test v == [11, 2, 12, 13]
+  end
+
+  @testset "Custom swizzling" begin
+    if VERSION ≥ v"1.11-DEV"
+      @eval macro _swizzle(ex)
+        new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
+        component_names = merge(Swizzles.component_names[], new_names)
+        ex = @with Swizzles.component_names => component_names begin
+          Swizzles.generate_swizzle_expr(ex)
+        end
+        ex
+      end
+
+      v = [10, 20, 30]
+      sw = @eval @_swizzle $v.dwh
+      @test sw == [30, 10, 20]
+
+      sw = @eval @_swizzle $v.hw = (1, 4)
+      @test sw === (1, 4)
+      @test v == [4, 1, 30]
+    end
   end
 end;
