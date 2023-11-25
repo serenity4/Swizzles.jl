@@ -28,6 +28,11 @@ using Test
 
     sw = swizzle(v, 3)
     @test sw === 3
+
+    v = Any[1, 2, 3]
+    @test isa(swizzle(v, 3, 1), Vector{Any})
+    @test isa(swizzle(Vector, v, 3, 1), Vector{Int})
+    @test isa(swizzle(Vector{Float64}, v, 3, 1), Vector{Float64})
   end
 
   @testset "`swizzle!`" begin
@@ -61,6 +66,15 @@ using Test
     sw = @swizzle v.xzw = [11, 12, 13]
     @test sw == [11, 12, 13]
     @test v == [11, 2, 12, 13]
+
+    sw = @swizzle v.xzw = @swizzle v.zyx
+    @test sw == [12, 2, 11]
+    @test v == [12, 2, 2, 11]
+
+    @test_throws "type argument can't be provided" @eval @swizzle Tuple v.xyz = (1, 2, 3)
+    @test_throws "Expected swizzle expression of the form" @eval @swizzle Tuple (1, 2, 3)
+    @test_throws "Expected `QuoteNode` value in `swizzle`" @eval @swizzle $(Expr(:., :(QuoteNode(v)), 3))
+    @test_throws "Expected symbol `QuoteNode` value in `swizzle`" @eval @swizzle $(Expr(:., :(QuoteNode(v)), QuoteNode(3)))
   end
 
   @testset "Custom swizzling" begin

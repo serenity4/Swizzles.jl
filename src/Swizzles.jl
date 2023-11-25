@@ -55,7 +55,7 @@ struct InvalidSwizzle <: Exception
   msg::String
 end
 
-Base.showerror(io::IO, exc::InvalidSwizzle) = print(io, "InvalidSwizzle: ", msg)
+Base.showerror(io::IO, exc::InvalidSwizzle) = print(io, "InvalidSwizzle: ", exc.msg)
 
 component_names_dict = Dict(
   # [x, y, z, w] denoting a spatial 4-vector in homogeneous space.
