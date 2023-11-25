@@ -1,16 +1,15 @@
 module Swizzles
 
 """
-    swizzle(x, indices...)
-    swizzle(T, x, indices...)
+    swizzle(v, indices...)
+    swizzle(T, v, indices...)
 
-Create a new object made up of `x[i₁], x[i₂], ...` where `indices = (i₁, i₂, ...)`.
+Create a new object made up of `v[i₁], v[i₂], ...` where `indices = (i₁, i₂, ...)`.
 If a type is provided as first argument, the result will be wrapped into it.
 """
 function swizzle end
 
-function swizzle(::Type{Tuple}, v::AbstractVector, i, indices...)
-  T = typeof(v)
+function swizzle(::Type{Tuple}, v, i, indices...)
   indices = (i, indices...)
   ntuple(i -> v[indices[i]], length(indices))
 end
@@ -21,6 +20,20 @@ swizzle(v::AbstractVector, i, j, indices...) = swizzle(typeof(v), v, i, j, indic
 construct_swizzle(::Type{T}, args::Tuple) where {T} = T(args...)
 construct_swizzle(::Type{Vector}, args::Tuple) = [args...]
 construct_swizzle(::Type{Vector{T}}, args::Tuple) where {T} = T[args...]
+
+"""
+    swizzle!(v, value, indices...)
+
+Mutate `v` at `indices` such that `v[i₁] = value[1], v[i₂] = value[2], ...` where `indices = (i₁, i₂, ...)`,
+and return `value`.
+"""
+function swizzle!(v, value, i, indices...)
+  indices = (i, indices...)
+  for (i, ind) in enumerate(indices)
+    v[ind] = value[i]
+  end
+  value
+end
 
 struct InvalidSwizzle <: Exception
   msg::String
@@ -49,10 +62,12 @@ else
 end
 
 function generate_swizzle_expr(ex::Expr, T = nothing)
-  if !Meta.isexpr(ex, :., 2)
-    throw(ArgumentError("Expected expression of the form `<v>.<swizzle>`, got $(repr(ex))"))
+  lhs, rhs = Meta.isexpr(ex, :(=), 2) ? ex.args : (ex, nothing)
+  !isnothing(rhs) && !isnothing(T) && throw(ArgumentError("A type argument can't be provided for a mutating swizzle operation in `$ex"))
+  if !Meta.isexpr(lhs, :., 2)
+    throw(ArgumentError("Expected swizzle expression of the form `<v>.<swizzle>`, got `$lhs`"))
   end
-  v, swizzle = ex.args
+  v, swizzle = lhs.args
   if !isa(swizzle, QuoteNode)
     throw(InvalidSwizzle("Expected `QuoteNode` value in `swizzle`, got value of type `$(typeof(swizzle))"))
   end
@@ -61,11 +76,11 @@ function generate_swizzle_expr(ex::Expr, T = nothing)
     throw(InvalidSwizzle("Expected symbol `QuoteNode` value in `swizzle`, got value of type `$(typeof(swizzle))"))
   end
   components = [component_names[][c] for c in string(swizzle)]
-  if isnothing(T)
-    :(swizzle($(esc(v)), $(components...)))
-  else
-    :(swizzle($(esc(T)), $(esc(v)), $(components...)))
-  end
+  f = isnothing(rhs) ? :swizzle : :swizzle!
+  args = [esc(v); components]
+  !isnothing(T) && pushfirst!(args, esc(T))
+  !isnothing(rhs) && insert!(args, 2, esc(rhs))
+  :($f($(args...)))
 end
 
 macro swizzle(T, ex)
@@ -76,6 +91,6 @@ macro swizzle(ex)
   generate_swizzle_expr(ex)
 end
 
-export swizzle, @swizzle
+export swizzle, swizzle!, @swizzle
 
 end

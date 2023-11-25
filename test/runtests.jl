@@ -30,19 +30,36 @@ using Test
     @test sw === 3
   end
 
+  @testset "`swizzle!`" begin
+    v = [1, 2, 3]
+    @test swizzle!(v, [5, 6], 3, 1) == [5, 6]
+    @test v == [6, 2, 5]
+
+    v = @MVector [1, 2, 3]
+    @test swizzle!(v, [5, 6], 3, 1) == [5, 6]
+    @test v == @MVector [6, 2, 5]
+  end
+
   @testset "`@swizzle`" begin
     v = [1, 2, 3, 4]
 
-    @test (@eval @swizzle v.xzw) == [1, 3, 4]
-    @test (@eval @swizzle v.rab) == [1, 4, 3]
-    @test (@eval @swizzle v.xyx) == [1, 2, 1]
-    @test (@eval @swizzle v.zz) == [3, 3]
-    @test (@eval @swizzle v.zz) == [3, 3]
+    sw = @swizzle v.xzw
+    @test sw == [1, 3, 4]
 
-    @test (@eval @swizzle Tuple v.xzw) === (1, 3, 4)
-    @test (@eval @swizzle Tuple v.rab) === (1, 4, 3)
-    @test (@eval @swizzle Tuple v.xyx) === (1, 2, 1)
-    @test (@eval @swizzle Tuple v.zz) === (3, 3)
-    @test (@eval @swizzle Tuple v.zz) === (3, 3)
+    @test (@eval @swizzle $v.xzw) == [1, 3, 4]
+    @test (@eval @swizzle $v.rab) == [1, 4, 3]
+    @test (@eval @swizzle $v.xyx) == [1, 2, 1]
+    @test (@eval @swizzle $v.zz) == [3, 3]
+    @test (@eval @swizzle $v.zz) == [3, 3]
+
+    @test (@eval @swizzle Tuple $v.xzw) === (1, 3, 4)
+    @test (@eval @swizzle Tuple $v.rab) === (1, 4, 3)
+    @test (@eval @swizzle Tuple $v.xyx) === (1, 2, 1)
+    @test (@eval @swizzle Tuple $v.zz) === (3, 3)
+    @test (@eval @swizzle Tuple $v.zz) === (3, 3)
+
+    sw = @swizzle v.xzw = [11, 12, 13]
+    @test sw == [11, 12, 13]
+    @test v == [11, 2, 12, 13]
   end
 end;
