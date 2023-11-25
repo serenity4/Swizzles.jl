@@ -42,6 +42,8 @@ construct_swizzle(::Type{Vector{T}}, args::Tuple) where {T} = T[args...]
 
 Mutate `v` at `indices` such that `v[i₁] = value[1], v[i₂] = value[2], ...` where `indices = (i₁, i₂, ...)`.
 and return `value`.
+
+If any indices are duplicated in `indices`, `v` will be consecutively overwritten at the corresponding index, retaining the last value per the semantics of `setindex!`.
 """
 function swizzle!(v, value, i, indices...)
   indices = (i, indices...)
