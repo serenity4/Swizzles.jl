@@ -186,7 +186,7 @@ export swizzle, swizzle!, @swizzle
     v.rgb = v.zyx
     v.w = $(copy(v)).z
   end
-  @swizzle Tuple (v.x, v.y + 1, v.z)
+  @swizzle Float64 (v.x, v.y + 1, v.z)
 end
 
 end

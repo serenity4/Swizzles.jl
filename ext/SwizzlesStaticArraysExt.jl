@@ -1,7 +1,6 @@
-module SwizzlesStaticArraysCoreExt
+module SwizzlesStaticArraysExt
 
-using StaticArraysCore
-using StaticArraysCore: StaticVector
+using StaticArrays
 using PrecompileTools
 using Swizzles
 
@@ -24,11 +23,11 @@ end
     v.rgb = v.zyx
     v.w = $(copy(v)).z
   end
-  @swizzle Tuple (v.x, v.y + 1, v.z)
+  @swizzle Float64 (v.x, v.y + 1, v.z)
 
   v = SVector{4,Int}((1, 2, 3, 4))
   @swizzle v.rgba
-  @swizzle Tuple (v.x, v.y + 1, v.z)
+  @swizzle Float64 (v.x, v.y + 1, v.z)
 end
 
 end # module
