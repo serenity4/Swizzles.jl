@@ -71,8 +71,24 @@ using Test
     @test sw == [12, 2, 11]
     @test v == [12, 2, 2, 11]
 
-    @test_throws "type argument can't be provided" @eval @swizzle Tuple v.xyz = (1, 2, 3)
-    @test_throws "Expected swizzle expression of the form" @eval @swizzle Tuple (1, 2, 3)
+    v = Ref([1, 2, 3, 4])
+    sw = @swizzle $(v[]).xzw = @swizzle $(v[]).zyx
+    @test v[] == [3, 2, 2, 1]
+
+    v = [1, 2, 3, 4]
+    sw = @swizzle v.xzw = v.zyx
+    @test v == [3, 2, 2, 1]
+
+    a = [1, 2, 3]
+    b = [4, 5, 6]
+    sw = @swizzle Float64 begin
+      a.z = b.x
+      b.y = a.x
+    end
+    @test sw === 1.0 == a[1]
+    @test a == [1, 2, 4]
+    @test b == [4, 1, 6]
+
     @test_throws "Expected `QuoteNode` value in `swizzle`" @eval @swizzle $(Expr(:., :(QuoteNode(v)), 3))
     @test_throws "Expected symbol `QuoteNode` value in `swizzle`" @eval @swizzle $(Expr(:., :(QuoteNode(v)), QuoteNode(3)))
   end

@@ -1,5 +1,7 @@
 module Swizzles
 
+using PrecompileTools
+
 """
     swizzle(v, indices...)
     swizzle(T, v, indices...)
@@ -79,12 +81,17 @@ else
   component_names = Ref(component_names_dict)
 end
 
-function generate_swizzle_expr(ex::Expr, T = nothing)
+walk(ex::Expr, inner, outer) = outer(Meta.isexpr(ex, :$) ? ex.args[1] : Expr(ex.head, map(inner, ex.args)...))
+walk(ex, inner, outer) = outer(ex)
+
+postwalk(f, ex) = walk(ex, x -> postwalk(f, x), f)
+prewalk(f, ex) = walk(f(ex), x -> prewalk(f, x), identity)
+
+generate_swizzle_expr(ex::Expr, T = nothing) = prewalk(x -> _generate_swizzle_expr(x, T), ex)
+function _generate_swizzle_expr(ex, T = nothing)
+  !isa(ex, Expr) && return ex
   lhs, rhs = Meta.isexpr(ex, :(=), 2) ? ex.args : (ex, nothing)
-  !isnothing(rhs) && !isnothing(T) && throw(ArgumentError("A type argument can't be provided for a mutating swizzle operation in `$ex"))
-  if !Meta.isexpr(lhs, :., 2)
-    throw(ArgumentError("Expected swizzle expression of the form `<v>.<swizzle>`, got `$lhs`"))
-  end
+  !Meta.isexpr(lhs, :., 2) && return ex
   v, swizzle = lhs.args
   if !isa(swizzle, QuoteNode)
     throw(InvalidSwizzle("Expected `QuoteNode` value in `swizzle`, got value of type `$(typeof(swizzle))"))
@@ -93,11 +100,12 @@ function generate_swizzle_expr(ex::Expr, T = nothing)
   if !isa(swizzle, Symbol)
     throw(InvalidSwizzle("Expected symbol `QuoteNode` value in `swizzle`, got value of type `$(typeof(swizzle))"))
   end
-  components = [component_names[][c] for c in string(swizzle)]
-  f = isnothing(rhs) ? :swizzle : :swizzle!
-  args = [esc(v); components]
-  !isnothing(T) && pushfirst!(args, esc(T))
-  !isnothing(rhs) && insert!(args, 2, esc(rhs))
+  components = Any[component_names[][c] for c in string(swizzle)]
+  f = isnothing(rhs) ? @__MODULE__().swizzle : swizzle!
+  args = components
+  pushfirst!(args, v)
+  isnothing(rhs) && !isnothing(T) && pushfirst!(args, T)
+  !isnothing(rhs) && insert!(args, 2, rhs)
   :($f($(args...)))
 end
 
@@ -105,16 +113,21 @@ end
     @swizzle v.xyz
     @swizzle v.rgb
     @swizzle T v.xyz
+    @swizzle \$(v[].some.expression()).xyz
     @swizzle v.xyz = [1, 2, 3]
     @swizzle v.rgb = v.bgr
+    @swizzle begin
+      a.yz = b.xz
+      b.w = a.x
+    end
 
 Perform a swizzling operation, extracting components or, if an assignment is provided, mutating them.
 
-This macro translates a `.<field1><field2>...<fieldn>` syntax such as `.xwyz` into an appropriate call to [`swizzle`](@ref) (non-mutating) or [`swizzle!`](@ref) (mutating).
+This macro translates **every** `.<field1><field2>...<fieldn>` field access syntax (e.g. `.xwyz`) in the provided expression into an appropriate call to [`swizzle`](@ref) (non-mutating) or [`swizzle!`](@ref) (mutating). To prevent this transformation from affecting part of the expression, shield the subexpression with `\$` like so: `@swizzle \$(object.vector).xyz`.
 
-If the operation is non-mutating, an additional type argument `T` may be provided to put the result of the extraction into a specific type (see the documentation for [`swizzle`](@ref) for more details).
+An additional type argument `T` may be provided to put the result of a non-mutating swizzle extraction into a specific type (see the documentation for [`swizzle`](@ref) for more details). It has no effect on mutating swizzles.
 
-Each letter on the right-hand side of `.` is considered as a separate component name, and is by default mapped to:
+Each letter on the right-hand side of any `.` is considered as a separate component name, and is by default mapped to:
 - `x` or `r` -> first component
 - `y` or `g` -> second component
 - `z` or `b` -> third component
@@ -144,7 +157,8 @@ macro _swizzle(ex)
   new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
   ex = quote
     @with Swizzles.component_names => merge(Swizzles.component_names[], \$new_names) do
-      Swizzles.@swizzle \$ex
+      # One might also pass around a `T` parameter as second argument.
+      Swizzles.generate_swizzle_expr(\$ex)
     end
   end
   esc(ex)
@@ -156,13 +170,23 @@ Whether or not this is a good idea is for you to decide.
 macro swizzle end
 
 macro swizzle(T, ex)
-  generate_swizzle_expr(ex, T)
+  esc(generate_swizzle_expr(ex, T))
 end
 
 macro swizzle(ex)
-  generate_swizzle_expr(ex)
+  esc(generate_swizzle_expr(ex))
 end
 
 export swizzle, swizzle!, @swizzle
+
+@compile_workload begin
+  v = [1, 2, 3, 4]
+  @swizzle begin
+    v.x = v.y
+    v.rgb = v.zyx
+    v.w = $(copy(v)).z
+  end
+  @swizzle Tuple (v.x, v.y + 1, v.z)
+end
 
 end
