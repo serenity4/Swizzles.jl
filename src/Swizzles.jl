@@ -76,9 +76,9 @@ const component_names_dict = Dict(
 )
 
 if @isdefined(ScopedValue)
-  component_names = ScopedValue(component_names_dict)
+  const component_names = ScopedValue(component_names_dict)
 else
-  component_names = Ref(component_names_dict)
+  const component_names = Ref(component_names_dict)
 end
 
 walk(ex::Expr, inner, outer) = outer(Meta.isexpr(ex, :$) ? ex.args[1] : Expr(ex.head, map(inner, ex.args)...))
