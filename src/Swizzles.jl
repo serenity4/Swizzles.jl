@@ -142,11 +142,18 @@ This mapping may be customized from Julia 1.11 onwards (see extended help).
 From Julia 1.11 onwards, [scoped values](https://docs.julialang.org/en/v1.11-dev/base/scopedvalues/) allow the customization of this component mapping, via `@with Swizzles.component_names => Dict(...)`. For example, if you wanted to consider width, height and depth as first, second and third components, you may do
 ```julia
 new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
-# You might also have done `@with Swizzles.component_names => new_names`
+
+# You might also have done `@with Swizzles.component_names[] => new_names`
 # to discard existing names.
-@with Swizzles.component_names => merge(Swizzles.component_names, new_names) do
-  @swizzle dims.w
-  @swizzle dims.whd
+@with Swizzles.component_names => merge(Swizzles.component_names[], new_names) begin
+  # Note: the `@eval` is important here.
+  # It prevents `@swizzle` from being executed before the scoped value is set.
+  @eval begin
+    @swizzle [10, 20, 30].w
+    @swizzle [10, 20, 30].whd
+  end
+  # `@swizzle` macrocalls in `include`d files will also be affected.
+  include("file.jl")
 end
 ```
 For convenience, you could even define your own `@swizzle` macro shadowing the one exported by this package as
@@ -155,14 +162,14 @@ using Swizzles
 
 macro _swizzle(ex)
   new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
-  ex = quote
-    @with Swizzles.component_names => merge(Swizzles.component_names[], \$new_names) do
-      # One might also pass around a `T` parameter as second argument.
-      Swizzles.generate_swizzle_expr(\$ex)
-    end
+  swizzle_ex = @with Swizzles.component_names => merge(Swizzles.component_names[], new_names) begin
+    # One might also pass around a `T` parameter as second argument.
+    Swizzles.generate_swizzle_expr(ex)
   end
-  esc(ex)
+  esc(swizzle_ex)
 end
+
+@_swizzle [10, 20, 30].hd
 ```
 
 Whether or not this is a good idea is for you to decide.

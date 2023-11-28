@@ -98,10 +98,10 @@ using Test
       @eval macro _swizzle(ex)
         new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
         component_names = merge(Swizzles.component_names[], new_names)
-        ex = @with Swizzles.component_names => component_names begin
+        swizzle_ex = @with Swizzles.component_names => component_names begin
           Swizzles.generate_swizzle_expr(ex)
         end
-        ex
+        esc(swizzle_ex)
       end
 
       v = [10, 20, 30]
@@ -111,6 +111,9 @@ using Test
       sw = @eval @_swizzle $v.hw = (1, 4)
       @test sw === (1, 4)
       @test v == [4, 1, 30]
+
+      sw = @eval @_swizzle $v.hw
+      @test sw == [1, 4]
     end
   end
 end;
