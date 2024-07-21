@@ -22,7 +22,7 @@ p = v4[1:3]/v4[4]
 
 # But we can do it in a way that is slightly more readable by using named accessors, like so:
 
-p = @swizzle v4.xyz/v4.w
+p = @swizzle(v4.xyz)/@swizzle(v4.w)
 
 # This is the most basic usage of swizzling. More advanced usage would include swizzling for modifying part of a vector, or reorder components. For that, we'll use colors to better keep track of components.
 
@@ -79,7 +79,9 @@ using StaticArrays
 v = @SVector [1.0, 2.0, 3.0]
 @swizzle v.xy
 
-# If you don't want part of the expression to be swizzled, you may shield it with `$`:
+# `@swizzle` will attempt to recognize a top-level swizzling expression,
+# therefore you may need to put parentheses and/or perform multiple
+# macrocalls to swizzle different bits of a single expression.
 
 struct ShaderData
   location::SVector{4,Float32}
@@ -88,7 +90,7 @@ end
 
 data = ShaderData(@SVector [2.1, 2.2, 2.3, 2.0])
 
-@swizzle $(data.location #= don't swizzle this =#).xyz/$(data.location #= nor that =#).w
+@swizzle(data.location.xyz)/@swizzle(data.location.w)
 
 #=
 
