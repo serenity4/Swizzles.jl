@@ -72,7 +72,7 @@ using Test
     @test v == [12, 2, 2, 11]
 
     v = Ref([1, 2, 3, 4])
-    sw = @swizzle $(v[]).xzw = @swizzle $(v[]).zyx
+    sw = @swizzle v[].xzw = @swizzle v[].zyx
     @test v[] == [3, 2, 2, 1]
 
     v = [1, 2, 3, 4]
@@ -81,11 +81,11 @@ using Test
 
     a = [1, 2, 3]
     b = [4, 5, 6]
-    sw = @swizzle Float64 begin
+    sw = @swizzle begin
       a.z = b.x
       b.y = a.x
     end
-    @test sw === 1.0 == a[1]
+    @test sw === 1 == a[1]
     @test a == [1, 2, 4]
     @test b == [4, 1, 6]
 

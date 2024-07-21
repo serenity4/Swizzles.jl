@@ -31,7 +31,7 @@ end
   @swizzle begin
     v.x = v.y
     v.rgb = v.zyx
-    v.w = $(copy(v)).z
+    v.w = copy(v).z
   end
   @swizzle Float64 (v.x, v.y + 1, v.z)
 

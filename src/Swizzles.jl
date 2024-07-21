@@ -81,16 +81,11 @@ else
   const component_names = Ref(component_names_dict)
 end
 
-walk(ex::Expr, inner, outer) = outer(Meta.isexpr(ex, :$) ? ex.args[1] : Expr(ex.head, map(inner, ex.args)...))
-walk(ex, inner, outer) = outer(ex)
-
-postwalk(f, ex) = walk(ex, x -> postwalk(f, x), f)
-prewalk(f, ex) = walk(f(ex), x -> prewalk(f, x), identity)
-
-generate_swizzle_expr(ex::Expr, T = nothing) = prewalk(x -> _generate_swizzle_expr(x, T), ex)
-function _generate_swizzle_expr(ex, T = nothing)
+function generate_swizzle_expr(ex, T = nothing)
   !isa(ex, Expr) && return ex
+  Meta.isexpr(ex, :block) && return Expr(:block, generate_swizzle_expr.(ex.args)...)
   lhs, rhs = Meta.isexpr(ex, :(=), 2) ? ex.args : (ex, nothing)
+  !isnothing(rhs) && (rhs = generate_swizzle_expr(rhs))
   !Meta.isexpr(lhs, :., 2) && return ex
   v, swizzle = lhs.args
   if !isa(swizzle, QuoteNode)
@@ -113,7 +108,7 @@ end
     @swizzle v.xyz
     @swizzle v.rgb
     @swizzle T v.xyz
-    @swizzle \$(v[].some.expression()).xyz
+    @swizzle v[].some.expression().xyz
     @swizzle v.xyz = [1, 2, 3]
     @swizzle v.rgb = v.bgr
     @swizzle begin
@@ -123,7 +118,7 @@ end
 
 Perform a swizzling operation, extracting components or, if an assignment is provided, mutating them.
 
-This macro translates **every** `.<field1><field2>...<fieldn>` field access syntax (e.g. `.xwyz`) in the provided expression into an appropriate call to [`swizzle`](@ref) (non-mutating) or [`swizzle!`](@ref) (mutating). To prevent this transformation from affecting part of the expression, shield the subexpression with `\$` like so: `@swizzle \$(object.vector).xyz`.
+This macro translates `x.<field1><field2>...<fieldn>` field access syntax (e.g. `x.xwyz`) in the provided expression into an appropriate call to [`swizzle`](@ref) (non-mutating) or [`swizzle!`](@ref) (mutating).
 
 An additional type argument `T` may be provided to put the result of a non-mutating swizzle extraction into a specific type (see the documentation for [`swizzle`](@ref) for more details). It has no effect on mutating swizzles.
 
@@ -191,9 +186,10 @@ export swizzle, swizzle!, @swizzle
   @swizzle begin
     v.x = v.y
     v.rgb = v.zyx
-    v.w = $(copy(v)).z
+    v.w = copy(v).z
   end
-  @swizzle Float64 (v.x, v.y + 1, v.z)
+  @swizzle Float64 v.x
+  @swizzle v.xy
 end
 
 end
