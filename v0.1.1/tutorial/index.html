@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial · Swizzles.jl</title><meta name="title" content="Tutorial · Swizzles.jl"/><meta property="og:title" content="Tutorial · Swizzles.jl"/><meta property="twitter:title" content="Tutorial · Swizzles.jl"/><meta name="description" content="Documentation for Swizzles.jl."/><meta property="og:description" content="Documentation for Swizzles.jl."/><meta property="twitter:description" content="Documentation for Swizzles.jl."/><meta property="og:url" content="https://serenity4.github.io/Swizzles.jl/tutorial/"/><meta property="twitter:url" content="https://serenity4.github.io/Swizzles.jl/tutorial/"/><link rel="canonical" href="https://serenity4.github.io/Swizzles.jl/tutorial/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Swizzles.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../motivation/">Motivation</a></li><li class="is-active"><a class="tocitem" href>Tutorial</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/serenity4/Swizzles.jl/blob/main/docs/src/tutorial.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorial"><a class="docs-heading-anchor" href="#Tutorial">Tutorial</a><a id="Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial" title="Permalink"></a></h1><p>Hello there! If you are curious about what swizzling can do and how to do it with this package, you are at the right place.</p><p>First, make sure that the package is installed and loaded, and let us create a vector to swizzle:</p><pre><code class="language-julia hljs">using Swizzles
+
+v4 = [10, 20, 30, 40]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4-element Vector{Int64}:
+ 10
+ 20
+ 30
+ 40</code></pre><p>The most common use of swizzling would be to extract part of a vector. Say <code>v4</code> represents a position in <a href="https://en.wikipedia.org/wiki/Homogeneous_coordinates">homogeneous coordinates</a>, and we&#39;d like to get the euclidean part. We would select the first three components, then divide by the fourth:</p><pre><code class="language-julia hljs">p = v4[1:3]/v4[4]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+ 0.25
+ 0.5
+ 0.75</code></pre><p>But we can do it in a way that is slightly more readable by using named accessors, like so:</p><pre><code class="language-julia hljs">p = @swizzle v4.xyz/v4.w</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+ 0.25
+ 0.5
+ 0.75</code></pre><p>This is the most basic usage of swizzling. More advanced usage would include swizzling for modifying part of a vector, or reorder components. For that, we&#39;ll use colors to better keep track of components.</p><pre><code class="language-julia hljs">using Colors
+
+v4 = [RGB(1.0, 0.0, 0.0), RGB(0.0, 1.0, 0.0), RGB(0.0, 0.0, 1.0), RGB(0.5, 0.5, 0.5)]</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="100mm" height="25mm"
+     viewBox="0 0 4 1" preserveAspectRatio="none"
+     shape-rendering="crispEdges" stroke="none">
+<rect width=".96" height=".96" x="0" y="0" fill="%23FF0000" />
+<rect width=".96" height=".96" x="1" y="0" fill="%2300FF00" />
+<rect width=".96" height=".96" x="2" y="0" fill="%230000FF" />
+<rect width=".96" height=".96" x="3" y="0" fill="%23808080" />
+</svg>'/><p>It so happens that swizzling is often used in context where vectors represent color components, where <code>[x, y, z, w]</code> represent the <code>[r, g, b, a]</code> color channels. Therefore, we decided to support color-based component names by default, such that one can do</p><pre><code class="language-julia hljs">p = @swizzle v4.rgb</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="75mm" height="25mm"
+     viewBox="0 0 3 1" preserveAspectRatio="none"
+     shape-rendering="crispEdges" stroke="none">
+<rect width=".96" height=".96" x="0" y="0" fill="%23FF0000" />
+<rect width=".96" height=".96" x="1" y="0" fill="%2300FF00" />
+<rect width=".96" height=".96" x="2" y="0" fill="%230000FF" />
+</svg>'/><p>You&#39;ll have noted that the various components of <code>p</code> are not actual color channels, so there is a clear abuse of language here. A single channel would have to be a single number, not a 3-channel <code>RGB</code> color value. Now, let&#39;s for example reverse the order of the first three components:</p><pre><code class="language-julia hljs">@swizzle p.rgb = p.bgr
+p</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="75mm" height="25mm"
+     viewBox="0 0 3 1" preserveAspectRatio="none"
+     shape-rendering="crispEdges" stroke="none">
+<rect width=".96" height=".96" x="0" y="0" fill="%230000FF" />
+<rect width=".96" height=".96" x="1" y="0" fill="%2300FF00" />
+<rect width=".96" height=".96" x="2" y="0" fill="%23FF0000" />
+</svg>'/><p>This could have been achieved with <code>p[1:3] = p[3:-1:1]</code> (or even <code>reverse(p)</code>, but that&#39;s cheating) which is still quite readable. However, swizzling syntax shines when the indexing patterns are not so linear. As <code>p</code> no longer holds actual red, green and blue data in order, we&#39;ll use spatial accessors to reduce confusion.</p><pre><code class="language-julia hljs">@swizzle p.xz = p.zx
+p</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="75mm" height="25mm"
+     viewBox="0 0 3 1" preserveAspectRatio="none"
+     shape-rendering="crispEdges" stroke="none">
+<rect width=".96" height=".96" x="0" y="0" fill="%23FF0000" />
+<rect width=".96" height=".96" x="1" y="0" fill="%2300FF00" />
+<rect width=".96" height=".96" x="2" y="0" fill="%230000FF" />
+</svg>'/><p>There we got back our original vector!</p><pre><code class="language-julia hljs">@swizzle v4.rga = v4.bar
+v4</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="100mm" height="25mm"
+     viewBox="0 0 4 1" preserveAspectRatio="none"
+     shape-rendering="crispEdges" stroke="none">
+<rect width=".96" height=".96" x="0" y="0" fill="%230000FF" />
+<rect width=".96" height=".96" x="1" y="0" fill="%23808080" />
+<rect width=".96" height=".96" x="2" y="0" fill="%230000FF" />
+<rect width=".96" height=".96" x="3" y="0" fill="%23FF0000" />
+</svg>'/><p>Compare this to what would be done without the syntax:</p><pre><code class="language-julia hljs"># This allocates!
+
+p[[1, 3]] = p[[3, 1]]
+v4[[1, 2, 4]] = v4[[3, 4, 1]]
+
+# This is just more verbose (though arguably clearer for certain situations;
+# less does not necessarily mean better).
+
+p[1] = p[3]
+p[3] = p[1]
+
+v4[1] = v4[3]
+v4[2] = v4[4]
+v4[4] = v4[1]</code></pre><p>The value of this swizzling functionality is more apparent when there are lots of operations of this sort, in shaders for example. Although in computer graphics, it will be much more common to use statically-sized vectors; swizzling works on them too!</p><pre><code class="language-julia hljs">using StaticArrays
+
+v = @SVector [1.0, 2.0, 3.0]
+@swizzle v.xy</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2-element StaticArraysCore.SVector{2, Float64} with indices SOneTo(2):
+ 1.0
+ 2.0</code></pre><p>If you don&#39;t want part of the expression to be swizzled, you may shield it with <code>$</code>:</p><pre><code class="language-julia hljs">struct ShaderData
+  location::SVector{4,Float32}
+  # ...
+end
+
+data = ShaderData(@SVector [2.1, 2.2, 2.3, 2.0])
+
+@swizzle $(data.location #= don&#39;t swizzle this =#).xyz/$(data.location #= nor that =#).w</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element StaticArraysCore.SVector{3, Float32} with indices SOneTo(3):
+ 1.05
+ 1.1
+ 1.15</code></pre><p>That ends this brief tutorial. You may consult the <a href="../reference/#Reference">API reference</a> for more in-depth information about syntax and functionality.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../motivation/">« Motivation</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Sunday 21 July 2024 15:12">Sunday 21 July 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
