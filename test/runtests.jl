@@ -98,7 +98,7 @@ using Test
       @eval macro _swizzle(ex)
         new_names = Dict('w' => 1, 'h' => 2, 'd' => 3)
         component_names = merge(Swizzles.component_names[], new_names)
-        swizzle_ex = @with Swizzles.component_names => component_names begin
+        swizzle_ex = Base.@with Swizzles.component_names => component_names begin
           Swizzles.generate_swizzle_expr(ex)
         end
         esc(swizzle_ex)

@@ -4,7 +4,7 @@ using StaticArrays
 using PrecompileTools
 using Swizzles
 
-import Swizzles: swizzle
+import Swizzles: swizzle, swizzle!
 
 @generated function swizzle(v::SizedVector, i, j, indices...)
   V = v.name.name
@@ -14,6 +14,16 @@ end
 @generated function swizzle(v::StaticVector, i, j, indices...)
   V = v.name.name
   :(swizzle($V{Tuple{2 + length(indices)},eltype(v),1}, v, i, j, indices...))
+end
+
+@generated function swizzle!(v::StaticVector, value, i, indices...)
+  body = Expr(:block)
+  for k in 1:(1 + length(indices))
+    index = k == 1 ? :i : :(indices[$(k - 1)])
+    push!(body.args, :(v[$index] = value[$k]))
+  end
+  push!(body.args, :value)
+  body
 end
 
 @compile_workload begin
