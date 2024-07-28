@@ -36,17 +36,17 @@ p = @swizzle v4.rgb
 
 # You'll have noted that the various components of `p` are not actual color channels, so there is a clear abuse of language here. A single channel would have to be a single number, not a 3-channel `RGB` color value. Now, let's for example reverse the order of the first three components:
 
-@swizzle p.rgb = p.bgr
+@swizzle p.rgb = @swizzle p.bgr
 p
 
 # This could have been achieved with `p[1:3] = p[3:-1:1]` (or even `reverse(p)`, but that's cheating) which is still quite readable. However, swizzling syntax shines when the indexing patterns are not so linear. As `p` no longer holds actual red, green and blue data in order, we'll use spatial accessors to reduce confusion.
 
-@swizzle p.xz = p.zx
+@swizzle p.xz = @swizzle p.zx
 p
 
 # There we got back our original vector!
 
-@swizzle v4.rga = v4.bar
+@swizzle v4.rga = @swizzle v4.bar
 v4
 
 # Compare this to what would be done without the syntax:

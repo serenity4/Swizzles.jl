@@ -67,6 +67,7 @@ using Test
     @test sw == [11, 12, 13]
     @test v == [11, 2, 12, 13]
 
+    @test_throws "type Array has no field" @swizzle v.xzw = v.zyx
     sw = @swizzle v.xzw = @swizzle v.zyx
     @test sw == [12, 2, 11]
     @test v == [12, 2, 2, 11]
@@ -76,7 +77,7 @@ using Test
     @test v[] == [3, 2, 2, 1]
 
     v = [1, 2, 3, 4]
-    sw = @swizzle v.xzw = v.zyx
+    sw = @swizzle v.xzw = @swizzle v.zyx
     @test v == [3, 2, 2, 1]
 
     a = [1, 2, 3]

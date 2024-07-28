@@ -81,11 +81,11 @@ else
   const component_names = Ref(component_names_dict)
 end
 
-function generate_swizzle_expr(ex, T = nothing)
+function generate_swizzle_expr(ex, T = nothing; lhs_only = true)
   !isa(ex, Expr) && return ex
-  Meta.isexpr(ex, :block) && return Expr(:block, generate_swizzle_expr.(ex.args)...)
+  Meta.isexpr(ex, :block) && return Expr(:block, generate_swizzle_expr.(ex.args; lhs_only = false)...)
   lhs, rhs = Meta.isexpr(ex, :(=), 2) ? ex.args : (ex, nothing)
-  !isnothing(rhs) && (rhs = generate_swizzle_expr(rhs))
+  !isnothing(rhs) && (rhs = lhs_only ? rhs : generate_swizzle_expr(rhs))
   !Meta.isexpr(lhs, :., 2) && return ex
   v, swizzle = lhs.args
   if !isa(swizzle, QuoteNode)
@@ -110,7 +110,7 @@ end
     @swizzle T v.xyz
     @swizzle v[].some.expression().xyz
     @swizzle v.xyz = [1, 2, 3]
-    @swizzle v.rgb = v.bgr
+    @swizzle v.rgb = @swizzle v.bgr
     @swizzle begin
       a.yz = b.xz
       b.w = a.x
