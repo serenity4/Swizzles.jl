@@ -75,8 +75,9 @@ const component_names_dict = Dict(
   'a' => 4,
 )
 
-if isdefined(Base, :ScopedValue)
-  const component_names = Base.ScopedValue(component_names_dict)
+if VERSION ≥ v"1.11"
+  using Base.ScopedValues: ScopedValue
+  const component_names = ScopedValue(component_names_dict)
 else
   const component_names = Ref(component_names_dict)
 end
